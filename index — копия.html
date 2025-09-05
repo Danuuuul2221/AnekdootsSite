@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анекдоты V1.0 с Telegram ботом</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-image: url('https://i.postimg.cc/1XQ3zJK3/wp7121785.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: background-image 0.5s ease, background-color 0.5s ease;
+        }
+        
+        body.light-theme {
+            background-image: url('https://i.postimg.cc/ht6QsVBb/i.jpg');
+            color: #333;
+        }
+        
+        body.orange-theme {
+            background-image: url('https://i.postimg.cc/d3NrphdF/f2982e203609575-669a1ed07ff8b.jpg');
+            background-color: #ff7700;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        body.light-theme .container {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.orange-theme .container {
+            background: rgba(255, 140, 0, 0.0);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+        
+        /* Кнопка переключения темы */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(41, 182, 246, 0.4);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(41, 182, 246, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .theme-toggle:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: scale(0.95);
+        }
+        
+        body.light-theme .theme-toggle {
+            background: rgba(30, 136, 229, 0.7);
+            color: #fff;
+        }
+        
+        body.orange-theme .theme-toggle {
+            background: rgba(255, 140, 0, 0.7);
+            color: #fff;
+        }
+        
+        /* Статус бота - перемещен вверх */
+        .bot-status {
+            position: fixed;
+            top: 20px;
+            left: 80px;
+            background: rgba(41, 182, 246, 0.4);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: white;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        body.light-theme .bot-status {
+            background: rgba(30, 136, 229, 0.4);
+            color: #1e3c72;
+        }
+        
+        body.orange-theme .bot-status {
+            background: rgba(255, 140, 0, 0.6);
+            color: #fff;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+        
+        .status-indicator.offline {
+            background: #f44336;
+        }
+        
+        .status-indicator.connecting {
+            background: #ff9800;
+        }
+        
+        /* Навигационная панель */
+        .nav-panel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(41, 182, 246, 0.4);
+            border: none;
+            border-radius: 23px;
+            padding: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 150px;
+            text-decoration: none;
+        }
+        
+        body.light-theme .nav-button {
+            background: rgba(30, 136, 229, 0.2);
+            color: #1e3c72;
+        }
+        
+        body.orange-theme .nav-button {
+            background: rgba(255, 140, 0, 0.8);
+            color: #fff;
+        }
+        
+        .nav-button:hover {
+            background: rgba(41, 182, 246, 0.5);
+            transform: translateY(-5px);
+        }
+        
+        body.light-theme .nav-button:hover {
+            background: rgba(30, 136, 229, 0.4);
+        }
+        
+        body.orange-theme .nav-button:hover {
+            background: rgba(255, 140, 0, 0.5);
+        }
+        
+        .nav-button img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-button span {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        body.light-theme header {
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        body.orange-theme header {
+            border-bottom: 2px solid rgba(255, 165, 0, 0.4);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+        
+        body.light-theme h1 {
+            color: #1e3c72;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.orange-theme h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            color: #e0f7fa;
+        }
+        
+        body.light-theme .subtitle {
+            color: #2a5298;
+        }
+        
+        body.orange-theme .subtitle {
+            color: #ffd700;
+        }
+        
+        .jokes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .joke {
+            background: rgba(30, 136, 229, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #64b5f6;
+            transition: all 0.4s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        body.light-theme .joke {
+            background: rgba(100, 181, 246, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        body.orange-theme .joke {
+            background: rgba(255, 140, 0, 0.25);
+            border-left: 4px solid #ff8c00;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Анимация смещения влево при наведении */
+        .joke:hover {
+            transform: translateX(-15px);
+            background: rgba(30, 136, 229, 0.4);
+            box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        body.light-theme .joke:hover {
+            background: rgba(30, 136, 229, 0.3);
+        }
+        
+        body.orange-theme .joke:hover {
+            background: rgba(255, 140, 0, 0.4);
+            box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.25);
+        }
+        
+        .joke-content {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        body.light-theme .joke-content {
+            color: #333;
+        }
+        
+        body.orange-theme .joke-content {
+            color: #fff;
+        }
+        
+        .joke-type {
+            display: inline-block;
+            background: rgba(41, 182, 246, 0.3);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #e1f5fe;
+        }
+        
+        body.light-theme .joke-type {
+            background: rgba(30, 136, 229, 0.4);
+            color: #d6d6d6;
+        }
+        
+        body.orange-theme .joke-type {
+            background: rgba(255, 140, 0, 0.4);
+            color: #fff;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            color: #bbdefb;
+        }
+        
+        body.light-theme footer {
+            border-top: 2px solid rgba(0, 0, 0, 0.1);
+            color: #2a5298;
+        }
+        
+        body.orange-theme footer {
+            border-top: 2px solid rgba(255, 165, 0, 0.4);
+            color: #ffd700;
+        }
+        
+        .handwritten {
+            font-family: 'Comic Sans MS', cursive;
+            color: #e3f2fd;
+        }
+        
+        body.light-theme .handwritten {
+            color: #1e3c72;
+        }
+        
+        body.orange-theme .handwritten {
+            color: #ffd700;
+        }
+        
+        .heart {
+            color: #ff5252;
+            display: inline-block;
+        }
+        
+        /* Секретный текст */
+        .secret-area {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+            cursor: pointer;
+        }
+        
+        .secret-text {
+            position: absolute;
+            top: 20px;
+            right: -300px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 300px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s ease;
+            font-size: 0.95rem;
+            z-index: 101;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        body.light-theme .secret-text {
+            background: rgba(255, 255, 255, 0.8);
+            color: #333;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        body.orange-theme .secret-text {
+            background: rgba(255, 140, 0, 0.8);
+            color: #fff;
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+        
+        .secret-area:hover .secret-text {
+            right: 20px;
+        }
+        
+        .secret-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #bde0ff;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 8px;
+        }
+        
+        body.light-theme .secret-title {
+            color: #1e88e5;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        body.orange-theme .secret-title {
+            color: #ffd700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .secret-text p {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .secret-text p:last-child {
+            margin-bottom: 0;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        
+        /* Стили для Telegram сообщений */
+        .telegram-joke {
+            background: rgba(30, 136, 229, 0.3);
+            border-left: 4px solid #64b5f6;
+        }
+        
+        body.light-theme .telegram-joke {
+            background: rgba(100, 181, 246, 0.2);
+        }
+        
+        body.orange-theme .telegram-joke {
+            background: rgba(255, 140, 0, 0.25);
+            border-left: 4px solid #ff8c00;
+        }
+        
+        .telegram-label {
+            background: rgba(41, 182, 246, 0.3);
+        }
+        
+        body.light-theme .telegram-label {
+            background: rgba(30, 136, 229, 0.4);
+        }
+        
+        body.orange-theme .telegram-label {
+            background: rgba(255, 140, 0, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+            
+            .nav-panel {
+                gap: 10px;
+            }
+            
+            .nav-button {
+                width: 130px;
+                padding: 10px;
+            }
+            
+            .nav-button img {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .joke:hover {
+                transform: translateX(-8px);
+            }
+            
+            .secret-area {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .secret-text {
+                width: 250px;
+                font-size: 0.85rem;
+                padding: 15px;
+            }
+            
+            .theme-toggle {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .bot-status {
+                top: 10px;
+                left: 60px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+        }
+        
+        /* Декоративные элементы */
+        .decoration {
+            position: absolute;
+            opacity: 0.1;
+            font-size: 4rem;
+            z-index: 0;
+        }
+        
+        .decoration-1 {
+            bottom: -15px;
+            right: -5px;
+        }
+        
+        .decoration-2 {
+            top: -15px;
+            left: -5px;
+        }
+        
+        body.light-theme .decoration {
+            opacity: 0.15;
+        }
+        
+        body.orange-theme .decoration {
+            opacity: 0.15;
+        }
+        
+        /* Индикатор загрузки */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        body.light-theme .loader {
+            border: 3px solid rgba(0,0,0,.1);
+            border-top-color: #1e88e5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка переключения темы -->
+    <button class="theme-toggle">🌙</button>
+    
+    <!-- Статус бота - перемещен вверх -->
+    <div class="bot-status">
+        <div class="status-indicator" id="status-indicator"></div>
+        <span id="status-text">Подключение к Telegram...</span>
+    </div>
+    
+    <!-- Секретная область -->
+    <div class="secret-area">
+        <div class="secret-text">
+            <div class="secret-title">Секретное сообщение!</div>
+            <p>Иметели крыса собачий сок без кота.. но вы же люди?</p>
+            <p>это не анекдот.. это очень грустная история...</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Навигационная панель -->
+        <div class="nav-panel">
+            <a href="https://ru.wikipedia.org/wiki/Пылесос" target="_blank" class="nav-button">
+                <img src="https://i.ytimg.com/vi/8Q2L5F3Ei4A/maxresdefault.jpg" alt="Пипидастры">
+                <span>Пипидастры</span>
+            </a>
+            
+            <a href="https://yandex.ru" target="_blank" class="nav-button">
+                <img src="https://i.ytimg.com/vi/8Q2L5F3Ei4A/maxresdefault.jpg" alt="Яндекс Станции">
+                <span>Яндекс Станции</span>
+            </a>
+            
+            <a href="https://ru.wikipedia.org/wiki/Мухобойка" target="_blank" class="nav-button">
+                <img src="https://i.ytimg.com/vi/8Q2L5F3Ei4A/maxresdefault.jpg" alt="Мухобойки">
+                <span>Мухобойки</span>
+            </a>
+            
+            <a href="https://ru.wikipedia.org/wiki/Обогреватель" target="_blank" class="nav-button">
+                <img src="https://i.ytimg.com/vi/8Q2L5F3Ei4A/maxresdefault.jpg" alt="Обогреватели">
+                <span>нумпад и утка</span>
+            </a>
+        </div>
+        
+        <header>
+            <h1>Анекдоты про пипидастры</h1>
+            <p class="subtitle">Наша квадроберская жизни иногда бывает не простой...</p>
+            <p class="subtitle" id="telegram-status">Загрузка анекдотов... <span class="loader"></span></p>
+        </header>
+        
+        <div class="jokes-container">
+            <!-- Анекдоты будут загружены здесь -->
+        </div>
+        
+        <footer>
+            <p class="handwritten">Сделано с помощью пипидастров и моего кота | 2025😒</p>
+        </footer>
+    </div>
+
+    <script>
+        // Конфигурация Telegram бота
+        const BOT_TOKEN = '8234466027:AAFKfc_2FThdEY5scsbbmRPmWQ1YondWnY0';
+        const ALLOWED_USERNAME = 'L273222';
+        const POLLING_INTERVAL = 15000; // Интервал опроса (15 секунд)
+        
+        // Загрузка lastUpdateId из localStorage
+        let lastUpdateId = localStorage.getItem('lastUpdateId') || 0;
+        
+        // Загрузка анекдотов из localStorage
+        let jokes = JSON.parse(localStorage.getItem('jokes')) || [
+            {
+                content: "Купил я как-то пипидастр. Приношу домой, а жена спрашивает: 'Это что, новая мухобойка?' А я ей: 'Нет, дорогая, это пипидастр! Для создания воздушных потоков!' Теперь у нас мухи с обогревателя улетают от воздушных потоков пипидастра.",
+                type: "Пипидастр & Мухобойка",
+                fromTelegram: false
+            },
+            {
+                content: "Сидят как-то две Яндекс Станции на кухне, болтают. Одна другой говорит: 'Слушай, а почему у тебя экран такой теплый?' А та отвечает: 'Да это мой личный обогреватель экрана, чтобы коричневые чирикании уютнее было читать!'",
+                type: "Яндекс Станция & Обогреватель",
+                fromTelegram: false
+            },
+            {
+                content: "Что сказала Яндекс Станция, когда у неё спросили про коричневые чирикании? 'Это не баг, это фича! Так я демонстрирую свою любовь к теплым тонам и уютному интерфейсу!'",
+                type: "Яндекс Станция & Чирикании",
+                fromTelegram: false
+            },
+            {
+                content: "Сидят как-то мухобойка и пипидастр на полке в магазине. Говорит мухобойка: 'Я хотя бы практичная, а ты на что годишься?' А пипидастр в ответ: 'Зато я создаю воздушные потоки, а ты только хлопаешь!'",
+                type: "Пипидастр & Мухобойка",
+                fromTelegram: false
+            },
+            {
+                content: "Услышала Яндекс Станция про обогреватель экрана и возмутилась: 'Я и так теплая и ламповая, зачем мне еще обогреватель? Лучше купите мне пипидастр, чтобы я могла охлаждаться изящными взмахами!'",
+                type: "Яндекс Станция & Пипидастр",
+                fromTelegram: false
+            }
+        ];
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Меняем заголовок
+            const titles = [
+                "Мухобойка собачничает как кот",
+                "Утка крякала? нет?",
+                "Анекдоты на каждый день!",
+                "Принтер и ментос...",
+                "Белогрызки и Чёрногрызки.",
+                "не адвокатный юмор"
+            ];
+            
+            const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+            document.querySelector('h1').textContent = randomTitle;
+            
+            // Проверяем сохраненную тему
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.className = savedTheme + '-theme';
+            updateThemeButton(savedTheme);
+            
+            // Отображаем анекдоты
+            displayJokes();
+            
+            // Запускаем получение сообщений из Telegram
+            if (BOT_TOKEN && ALLOWED_USERNAME) {
+                updateBotStatus('Подключение к Telegram...', 'connecting');
+                getTelegramMessages();
+            } else {
+                updateBotStatus('Бот не настроен', 'offline');
+                document.getElementById('telegram-status').textContent = 'Бот не настроен';
+            }
+        });
+        
+        // Функция для обновления иконки кнопки темы
+        function updateThemeButton(theme) {
+            const themeButton = document.querySelector('.theme-toggle');
+            if (theme === 'dark') {
+                themeButton.textContent = '🌙';
+            } else if (theme === 'light') {
+                themeButton.textContent = '☀️';
+            } else if (theme === 'orange') {
+                themeButton.textContent = '🍊';
+            }
+        }
+        
+        // Функция для обновления статуса бота
+        function updateBotStatus(text, status) {
+            const statusText = document.getElementById('status-text');
+            const statusIndicator = document.getElementById('status-indicator');
+            
+            statusText.textContent = text;
+            statusIndicator.className = 'status-indicator';
+            
+            if (status === 'online') {
+                statusIndicator.classList.add('online');
+                statusIndicator.style.backgroundColor = '#4caf50';
+            } else if (status === 'offline') {
+                statusIndicator.classList.add('offline');
+                statusIndicator.style.backgroundColor = '#f44336';
+            } else if (status === 'connecting') {
+                statusIndicator.classList.add('connecting');
+                statusIndicator.style.backgroundColor = '#ff9800';
+            }
+        }
+        
+        // Переключение темы
+        document.querySelector('.theme-toggle').addEventListener('click', function() {
+            const button = this;
+            button.disabled = true;
+            
+            const themes = ['dark', 'light', 'orange'];
+            const currentTheme = document.body.className.replace('-theme', '');
+            const currentIndex = themes.indexOf(currentTheme);
+            const nextIndex = (currentIndex + 1) % themes.length;
+            const nextTheme = themes[nextIndex];
+            
+            document.body.className = nextTheme + '-theme';
+            localStorage.setItem('theme', nextTheme);
+            updateThemeButton(nextTheme);
+            
+            setTimeout(() => {
+                button.disabled = false;
+            }, 500);
+        });
+        
+        // Функция для отображения анекдотов
+        function displayJokes() {
+            const jokesContainer = document.querySelector('.jokes-container');
+            jokesContainer.innerHTML = '';
+            
+            const decorations = ['😄', '😂', '🤣', '😎', '🤪', '💬', '👻', '🤖'];
+            
+            jokes.forEach((joke, index) => {
+                const jokeElement = document.createElement('div');
+                jokeElement.className = joke.fromTelegram ? 'joke telegram-joke' : 'joke';
+                jokeElement.innerHTML = `
+                    <div class="decoration decoration-${index % 2 + 1}">${decorations[index % decorations.length]}</div>
+                    <div class="joke-content">${joke.content}</div>
+                    <span class="joke-type handwritten">${joke.type}</span>
+                `;
+                
+                jokeElement.addEventListener('mouseenter', function() {
+                    this.style.zIndex = '10';
+                });
+                
+                jokeElement.addEventListener('mouseleave', function() {
+                    this.style.zIndex = '1';
+                });
+                
+                jokesContainer.appendChild(jokeElement);
+            });
+            
+            document.getElementById('telegram-status').textContent = `Загружено анекдотов: ${jokes.length}`;
+        }
+        
+        // Функция для получения сообщений из Telegram
+        async function getTelegramMessages() {
+            if (!BOT_TOKEN || !ALLOWED_USERNAME) return;
+            
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=10`);
+                const data = await response.json();
+                
+                if (data.ok && data.result.length > 0) {
+                    updateBotStatus('Telegram подключен', 'online');
+                    
+                    // Фильтруем сообщения от нужного пользователя
+                    const userMessages = data.result.filter(update => 
+                        update.message && 
+                        update.message.from.username === ALLOWED_USERNAME && 
+                        update.message.text
+                    );
+                    
+                    if (userMessages.length > 0) {
+                        // Обновляем последний ID сообщения
+                        lastUpdateId = Math.max(...data.result.map(update => update.update_id));
+                        localStorage.setItem('lastUpdateId', lastUpdateId);
+                        
+                        // Обрабатываем команды
+                        processBotCommands(userMessages);
+                    }
+                } else if (!data.ok) {
+                    updateBotStatus('Ошибка подключения к Telegram', 'offline');
+                }
+            } catch (error) {
+                console.error('Ошибка при получении сообщений:', error);
+                updateBotStatus('Ошибка подключения к Telegram', 'offline');
+            }
+            
+            // Планируем следующий запрос
+            setTimeout(getTelegramMessages, POLLING_INTERVAL);
+        }
+        
+        // Обработка команд бота
+        function processBotCommands(messages) {
+            let hasChanges = false;
+            
+            messages.forEach(message => {
+                const text = message.message.text;
+                
+                // Команда добавления анекдота
+                if (text.startsWith('/add ')) {
+                    const jokeText = text.replace('/add ', '');
+                    
+                    // Проверяем, нет ли уже такого анекдота
+                    const isDuplicate = jokes.some(joke => joke.content === jokeText);
+                    
+                    if (!isDuplicate) {
+                        jokes.unshift({
+                            content: jokeText,
+                            type: "Из Telegram",
+                            fromTelegram: true
+                        });
+                        
+                        hasChanges = true;
+                    }
+                }
+                
+                // Команда редактирования анекдота
+                else if (text.startsWith('/edit ')) {
+                    const parts = text.split(' ');
+                    const jokeIndex = parseInt(parts[1]) - 1;
+                    const jokeText = parts.slice(2).join(' ');
+                    
+                    if (jokeIndex >= 0 && jokeIndex < jokes.length && jokeText) {
+                        jokes[jokeIndex].content = jokeText;
+                        jokes[jokeIndex].fromTelegram = true;
+                        hasChanges = true;
+                    }
+                }
+                
+                // Команда удаления анекдота
+                else if (text.startsWith('/delete ')) {
+                    const jokeIndex = parseInt(text.split(' ')[1]) - 1;
+                    
+                    if (jokeIndex >= 0 && jokeIndex < jokes.length) {
+                        jokes.splice(jokeIndex, 1);
+                        hasChanges = true;
+                    }
+                }
+            });
+            
+            if (hasChanges) {
+                // Сохраняем в localStorage
+                localStorage.setItem('jokes', JSON.stringify(jokes));
+                
+                // Обновляем отображение
+                displayJokes();
+            }
+        }
+    </script>
+</body>
+</html>
